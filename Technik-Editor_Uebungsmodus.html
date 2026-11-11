@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Technik-Editor – Übungsmodus</title>
+<style>
+:root{--rand:#d6dae1;--grund:#f4f6f9;--text:#1d2330;--grau:#6b7280;--gruen:#16a34a;--rot:#dc2626;--blau:#2563eb}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--text);background:var(--grund);-webkit-text-size-adjust:100%}
+body{display:flex;flex-direction:column;overflow:hidden}
+button,select{font:inherit;color:inherit}
+/* Kopfzeile */
+#kopf{display:flex;align-items:center;padding:8px 10px;background:#1d2330;color:#fff;flex-wrap:wrap}
+#kopf > *{margin:3px 5px}
+#titel{font-weight:700;font-size:18px;margin-right:auto !important}
+#titel small{font-weight:400;color:#aab2c0;font-size:14px;margin-left:6px}
+.pille{padding:5px 12px;border-radius:999px;font-size:14px;font-weight:600;background:#4b5563}
+.pille.bereit{background:#4b5563}.pille.laeuft{background:var(--gruen)}.pille.weg{background:var(--rot)}.pille.neu{background:#d97706}
+.knopf{border:0;border-radius:10px;padding:10px 18px;font-weight:700;font-size:17px;cursor:pointer;min-height:44px}
+#start{background:var(--gruen);color:#fff}#stopp{background:var(--rot);color:#fff}
+.knopf:active{transform:scale(.97)}
+/* Werkzeugleiste */
+#leiste{display:flex;align-items:center;flex-wrap:wrap;padding:6px 8px;background:#fff;border-bottom:1px solid var(--rand)}
+#leiste > *{margin:3px 4px}
+.klein{border:1px solid var(--rand);background:#fff;border-radius:8px;padding:7px 12px;font-size:15px;min-height:38px;cursor:pointer}
+.klein:active{background:#e5e7eb}
+label.ab{display:flex;align-items:center;font-size:15px}
+label.ab input{width:22px;height:22px;margin-right:6px}
+/* Hauptbereich */
+#haupt{flex:1;display:flex;min-height:0}
+#links{flex:1;display:flex;flex-direction:column;min-width:0}
+#editor{flex:1;display:flex;min-height:0;background:#fff;border-right:1px solid var(--rand)}
+#zeilen{width:44px;padding:10px 6px 10px 0;text-align:right;color:#9aa1ad;background:#f8f9fb;border-right:1px solid #eceef2;overflow:hidden;font:16px/1.5 Menlo,Consolas,"Courier New",monospace;white-space:pre;user-select:none;-webkit-user-select:none}
+#zeilen .fehl{color:#fff;background:var(--rot);border-radius:4px;padding:0 3px}
+#code{flex:1;border:0;outline:0;resize:none;padding:10px;font:16px/1.5 Menlo,Consolas,"Courier New",monospace;tab-size:4;-moz-tab-size:4;white-space:pre;overflow:auto;color:#111;background:#fff;-webkit-overflow-scrolling:touch}
+/* Tastenleiste fürs iPad */
+#tasten{display:flex;flex-wrap:wrap;padding:5px;background:#eef0f4;border-top:1px solid var(--rand);border-right:1px solid var(--rand)}
+#tasten button{min-width:44px;min-height:40px;margin:3px;border:1px solid #cfd4dc;background:#fff;border-radius:8px;font:600 17px Menlo,Consolas,monospace;cursor:pointer;padding:0 10px}
+#tasten button:active{background:#dfe3ea}
+/* Ausgabe */
+#ausgabeBox{height:30%;min-height:110px;display:flex;flex-direction:column;border-top:1px solid var(--rand);border-right:1px solid var(--rand)}
+#ausgabeKopf{display:flex;align-items:center;justify-content:space-between;padding:4px 10px;background:#111827;color:#cbd5e1;font-size:14px}
+#ausgabeKopf button{background:transparent;border:1px solid #475569;color:#cbd5e1;border-radius:6px;padding:3px 10px;font-size:13px;cursor:pointer}
+#ausgabe{flex:1;margin:0;padding:8px 10px;overflow:auto;background:#0b1220;color:#e5e7eb;font:15px/1.45 Menlo,Consolas,monospace;white-space:pre-wrap;word-wrap:break-word;-webkit-overflow-scrolling:touch}
+#ausgabe .f{color:#fca5a5}#ausgabe .h{color:#fde68a}#ausgabe .ok{color:#86efac}#ausgabe .s{color:#93c5fd}
+/* Bausteine */
+#rechts{width:300px;overflow-y:auto;background:#fff;-webkit-overflow-scrolling:touch}
+#rechts h2{font-size:15px;margin:0;padding:10px 12px 6px;color:var(--grau);font-weight:600}
+.gruppe{border-bottom:1px solid #eef0f3;padding:4px 10px 10px}
+.gruppe h3{margin:6px 2px 6px;font-size:14px;display:flex;align-items:center}
+.gruppe h3 i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:7px}
+.gruppe h3 span{font-weight:400;color:var(--grau);margin-left:5px;font-size:12px}
+.bs{display:inline-block;margin:3px 2px;padding:8px 11px;border-radius:8px;border:0;font-size:15px;color:#111;cursor:pointer;text-align:left;min-height:38px}
+.bs:active{filter:brightness(.92)}
+/* Dialog */
+#dlg{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
+#dlg.offen{display:flex}
+#dlgInhalt{background:#fff;border-radius:14px;max-width:640px;width:100%;max-height:90%;overflow:auto;padding:18px 20px}
+#dlgInhalt h2{margin-top:0}
+#dlgInhalt{max-width:820px}
+@keyframes blinken{0%,100%{opacity:1}50%{opacity:.15}}
+.blink{animation:blinken .8s ease-in-out infinite}
+#dlgInhalt table{border-collapse:collapse;width:100%;font-size:15px}
+#dlgInhalt td,#dlgInhalt th{border-bottom:1px solid #e5e7eb;padding:7px 6px;text-align:left}
+#dlgInhalt .warn{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px 10px;font-size:14px;margin:12px 0}
+body.ohneBs #rechts{display:none}
+#vorschlaege{height:46px;display:flex;align-items:center;overflow-x:auto;overflow-y:hidden;padding:0 6px;background:#fffbea;border-top:1px solid var(--rand);border-right:1px solid var(--rand);white-space:nowrap;-webkit-overflow-scrolling:touch}
+#vorschlaege .leer{color:#a8a29e;font-size:14px;padding-left:4px}
+#vorschlaege button{flex:none;margin:0 4px;min-height:36px;padding:0 12px;border:1px solid #f3d27a;background:#fff;border-radius:18px;font:600 16px Menlo,Consolas,monospace;cursor:pointer;color:#1d2330}
+#vorschlaege button.eigen{border-color:#93c5fd;background:#eff6ff}
+#vorschlaege button:active{filter:brightness(.92)}
+body.ohneVs #vorschlaege{display:none}
+#dlgInhalt input[type=text]{font-size:17px;padding:8px 10px;border:1px solid #cfd4dc;border-radius:8px;width:100%;margin:6px 0 12px}
+#dlgInhalt textarea{width:100%;height:220px;font:14px Menlo,Consolas,monospace;border:1px solid #cfd4dc;border-radius:8px;padding:8px}
+.dlgKnoepfe{margin-top:12px}.dlgKnoepfe button{margin:4px 6px 4px 0}
+#banner{background:#fff7d6;border-bottom:1px solid #f3d27a;padding:8px 14px;font-size:15px}
+#stopp,#speichern,label.ab{display:none !important}
+#start{background:#2563eb !important}
+#ausgabe .w{color:#fde68a}
+#meldung{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 18px;border-radius:10px;font-size:15px;display:none;z-index:20;max-width:90%}
+@media (min-width:761px) and (max-width:900px){ #rechts{width:250px} }
+@media (max-width:760px){
+  #haupt{flex-direction:column}
+  #rechts{width:auto;height:34%;border-top:1px solid var(--rand)}
+  #ausgabeBox{height:26%}
+}
+</style>
+</head>
+<body>
+
+<div id="kopf">
+  <div id="titel">⚙ Technik-Editor <small id="boardname">verbinde …</small></div>
+  <span id="status" class="pille bereit">…</span>
+  <button id="start" class="knopf">▶ Start</button>
+  <button id="stopp" class="knopf">■ Stopp</button>
+</div>
+
+<div id="banner">🏠 <b>Übungsmodus:</b> Hier schreibst du ohne Board. Mit <b>🔍 Prüfen</b> findest du Tippfehler. Speichern mit <b>⬇ Aufs iPad</b>, in der Schule mit <b>⬆ Datei öffnen</b> laden und starten.</div>
+<div id="leiste">
+  <select id="beispiele" class="klein"><option value="">📂 Beispiel laden …</option></select>
+  <button id="neu" class="klein">🗑 Neu</button>
+  <button id="speichern" class="klein">💾 Aufs Board</button>
+  <button id="herunterladen" class="klein">⬇ Aufs iPad</button>
+  <button id="oeffnenKnopf" class="klein">⬆ Datei öffnen</button>
+  <input type="file" id="oeffnen" accept=".py,.txt,text/plain,text/x-python" style="display:none">
+  <label class="ab"><input type="checkbox" id="autostart"> Beim Einschalten starten</label>
+  <button id="pinsKnopf" class="klein">📌 Pinbelegung</button>
+  <button id="bsKnopf" class="klein">🧩 Bausteine: an</button>
+  <button id="vsKnopf" class="klein">💡 Vorschläge: an</button>
+</div>
+
+<div id="haupt">
+  <div id="links">
+    <div id="editor">
+      <div id="zeilen">1</div>
+      <textarea id="code" wrap="off" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false"></textarea>
+    </div>
+    <div id="vorschlaege"></div>
+    <div id="tasten"></div>
+    <div id="ausgabeBox">
+      <div id="ausgabeKopf"><span>Ausgabe</span><button id="leeren">Leeren</button></div>
+      <pre id="ausgabe"></pre>
+    </div>
+  </div>
+  <div id="rechts"><h2>Bausteine – antippen zum Einfügen</h2><div id="bausteine"></div></div>
+</div>
+
+<div id="dlg"><div id="dlgInhalt"></div></div>
+<div id="meldung"></div>
+
+<script>
+"use strict";
+/* =====================================================================
+   Bausteine
+   imp:   benötigte Imports  ("time", "machine:Pin", "dht" …)
+   setup: Einrichtungs-Zeilen/Blöcke, werden oben einmal eingefügt
+   code:  wird an der Cursor-Position eingefügt
+   ===================================================================== */
+var SERVO_FN = "def servo_winkel(grad):\n    servo.duty_u16(1638 + int(grad * 6554 / 180))";
+var ULTRA_FN = "def entfernung_cm():\n    trig.off()\n    time.sleep_us(2)\n    trig.on()\n    time.sleep_us(10)\n    trig.off()\n    dauer = time_pulse_us(echo, 1, 30000)\n    if dauer < 0:\n        return -1\n    return dauer / 58";
+
+var BAUSTEINE = [
+ {g:"Ablauf", f:"#fde68a", teile:[
+  {t:"Für immer wiederholen", code:"while True:"},
+  {t:"10× wiederholen", code:"for i in range(10):"},
+  {t:"Wenn … dann", code:"if bedingung:"},
+  {t:"sonst", code:"else:"},
+  {t:"Warte 1 Sekunde", code:"time.sleep(1)", imp:["time"]},
+  {t:"Warte 0,1 Sekunden", code:"time.sleep(0.1)", imp:["time"]},
+  {t:"Ausgabe", code:'print("Hallo")'},
+  {t:"Variable", code:"zahl = 0"}
+ ]},
+ {g:"LED auf dem Board", p:"Klemme D2", f:"#bfdbfe", teile:[
+  {t:"LED an", code:"led.on()", imp:["machine:Pin"], setup:["led = Pin(2, Pin.OUT)"]},
+  {t:"LED aus", code:"led.off()", imp:["machine:Pin"], setup:["led = Pin(2, Pin.OUT)"]},
+  {t:"LED umschalten", code:"led.value(not led.value())", imp:["machine:Pin"], setup:["led = Pin(2, Pin.OUT)"]}
+ ]},
+ {g:"Ampel-LEDs", p:"D25 / D26 / D27", f:"#fecaca", teile:[
+  {t:"Rot an", code:"rot.on()", imp:["machine:Pin"], setup:["rot = Pin(25, Pin.OUT)"]},
+  {t:"Rot aus", code:"rot.off()", imp:["machine:Pin"], setup:["rot = Pin(25, Pin.OUT)"]},
+  {t:"Gelb an", code:"gelb.on()", imp:["machine:Pin"], setup:["gelb = Pin(26, Pin.OUT)"]},
+  {t:"Gelb aus", code:"gelb.off()", imp:["machine:Pin"], setup:["gelb = Pin(26, Pin.OUT)"]},
+  {t:"Grün an", code:"gruen.on()", imp:["machine:Pin"], setup:["gruen = Pin(27, Pin.OUT)"]},
+  {t:"Grün aus", code:"gruen.off()", imp:["machine:Pin"], setup:["gruen = Pin(27, Pin.OUT)"]}
+ ]},
+ {g:"Taster", p:"D4 → GND", f:"#c7d2fe", teile:[
+  {t:"Wenn Taster gedrückt", code:"if taster.value() == 0:", imp:["machine:Pin"], setup:["taster = Pin(4, Pin.IN, Pin.PULL_UP)"]},
+  {t:"Warte bis Taster gedrückt", code:"while taster.value() == 1:\n    time.sleep_ms(10)", imp:["machine:Pin","time"], setup:["taster = Pin(4, Pin.IN, Pin.PULL_UP)"]}
+ ]},
+ {g:"Poti / Lichtsensor", p:"D34", f:"#ddd6fe", teile:[
+  {t:"Wert messen (0 … 4095)", code:"wert = poti.read()", imp:["machine:Pin","machine:ADC"], setup:["poti = ADC(Pin(34))","poti.atten(ADC.ATTN_11DB)"]},
+  {t:"Wenn Wert klein", code:"if wert < 1000:"},
+  {t:"Wert anzeigen", code:'print("Wert:", wert)'}
+ ]},
+ {g:"Summer (passiv)", p:"D23", f:"#fbcfe8", teile:[
+  {t:"Ton 0,5 s", code:"summer.freq(440)\nsummer.duty_u16(32768)\ntime.sleep(0.5)\nsummer.duty_u16(0)", imp:["machine:Pin","machine:PWM","time"], setup:["summer = PWM(Pin(23), freq=440, duty_u16=0)"]},
+  {t:"Summer aus", code:"summer.duty_u16(0)", imp:["machine:Pin","machine:PWM"], setup:["summer = PWM(Pin(23), freq=440, duty_u16=0)"]}
+ ]},
+ {g:"Servo", p:"D13", f:"#bbf7d0", teile:[
+  {t:"Servo auf 0°", code:"servo_winkel(0)", imp:["machine:Pin","machine:PWM"], setup:["servo = PWM(Pin(13), freq=50)", SERVO_FN]},
+  {t:"Servo auf 90°", code:"servo_winkel(90)", imp:["machine:Pin","machine:PWM"], setup:["servo = PWM(Pin(13), freq=50)", SERVO_FN]},
+  {t:"Servo auf 180°", code:"servo_winkel(180)", imp:["machine:Pin","machine:PWM"], setup:["servo = PWM(Pin(13), freq=50)", SERVO_FN]}
+ ]},
+ {g:"Motor (über Treiber)", p:"D32 / D33", f:"#fed7aa", teile:[
+  {t:"Vorwärts", code:"motor_a.on()\nmotor_b.off()", imp:["machine:Pin"], setup:["motor_a = Pin(32, Pin.OUT)","motor_b = Pin(33, Pin.OUT)"]},
+  {t:"Rückwärts", code:"motor_a.off()\nmotor_b.on()", imp:["machine:Pin"], setup:["motor_a = Pin(32, Pin.OUT)","motor_b = Pin(33, Pin.OUT)"]},
+  {t:"Motor stopp", code:"motor_a.off()\nmotor_b.off()", imp:["machine:Pin"], setup:["motor_a = Pin(32, Pin.OUT)","motor_b = Pin(33, Pin.OUT)"]}
+ ]},
+ {g:"Temperatur DS18B20", p:"D19", f:"#a5f3fc", teile:[
+  {t:"Temperatur messen", code:"sensor.convert_temp()\ntime.sleep_ms(750)\ntemperatur = sensor.read_temp(fuehler[0])", imp:["machine:Pin","onewire","ds18x20","time"], setup:["sensor = ds18x20.DS18X20(onewire.OneWire(Pin(19)))","fuehler = sensor.scan()"]}
+ ]},
+ {g:"Temperatur + Feuchte DHT11", p:"D19", f:"#99f6e4", teile:[
+  {t:"DHT11 messen", code:"dht_sensor.measure()\ntemperatur = dht_sensor.temperature()\nfeuchte = dht_sensor.humidity()", imp:["machine:Pin","dht"], setup:["dht_sensor = dht.DHT11(Pin(19))"]}
+ ]},
+ {g:"Ultraschall HC-SR04", p:"TX2 / RX2", f:"#e9d5ff", teile:[
+  {t:"Abstand messen (cm)", code:"abstand = entfernung_cm()", imp:["machine:Pin","machine:time_pulse_us","time"], setup:["trig = Pin(17, Pin.OUT)","echo = Pin(16, Pin.IN)", ULTRA_FN]}
+ ]}
+];
+
+var BEISPIELE = {
+"Blinken (LED auf dem Board)":
+"from machine import Pin\nimport time\n\nled = Pin(2, Pin.OUT)\n\nwhile True:\n    led.on()\n    time.sleep(0.5)\n    led.off()\n    time.sleep(0.5)\n",
+"Ampel":
+"from machine import Pin\nimport time\n\nrot = Pin(25, Pin.OUT)\ngelb = Pin(26, Pin.OUT)\ngruen = Pin(27, Pin.OUT)\n\nwhile True:\n    rot.on()\n    time.sleep(3)\n    gelb.on()\n    time.sleep(1)\n    rot.off()\n    gelb.off()\n    gruen.on()\n    time.sleep(3)\n    gruen.off()\n    gelb.on()\n    time.sleep(1)\n    gelb.off()\n",
+"Taster schaltet LED":
+"from machine import Pin\nimport time\n\nled = Pin(2, Pin.OUT)\ntaster = Pin(4, Pin.IN, Pin.PULL_UP)\n\nwhile True:\n    if taster.value() == 0:\n        led.on()\n    else:\n        led.off()\n    time.sleep_ms(10)\n",
+"Nachtlicht (Lichtsensor)":
+"from machine import Pin, ADC\nimport time\n\nled = Pin(2, Pin.OUT)\npoti = ADC(Pin(34))\npoti.atten(ADC.ATTN_11DB)\n\nwhile True:\n    wert = poti.read()\n    print(\"Helligkeit:\", wert)\n    if wert < 1000:\n        led.on()\n    else:\n        led.off()\n    time.sleep(0.5)\n",
+"Servo schwenken":
+"from machine import Pin, PWM\nimport time\n\nservo = PWM(Pin(13), freq=50)\ndef servo_winkel(grad):\n    servo.duty_u16(1638 + int(grad * 6554 / 180))\n\nwhile True:\n    servo_winkel(0)\n    time.sleep(1)\n    servo_winkel(90)\n    time.sleep(1)\n    servo_winkel(180)\n    time.sleep(1)\n",
+"Temperatur messen (DS18B20)":
+"from machine import Pin\nimport onewire\nimport ds18x20\nimport time\n\nsensor = ds18x20.DS18X20(onewire.OneWire(Pin(19)))\nfuehler = sensor.scan()\n\nwhile True:\n    sensor.convert_temp()\n    time.sleep_ms(750)\n    temperatur = sensor.read_temp(fuehler[0])\n    print(\"Temperatur:\", temperatur, \"°C\")\n    time.sleep(1)\n",
+"Abstandswarner (Ultraschall + Summer)":
+"from machine import Pin, PWM, time_pulse_us\nimport time\n\ntrig = Pin(17, Pin.OUT)\necho = Pin(16, Pin.IN)\n" + ULTRA_FN + "\nsummer = PWM(Pin(23), freq=440, duty_u16=0)\n\nwhile True:\n    abstand = entfernung_cm()\n    print(\"Abstand:\", abstand, \"cm\")\n    if abstand > 0 and abstand < 20:\n        summer.duty_u16(32768)\n    else:\n        summer.duty_u16(0)\n    time.sleep(0.2)\n"
+};
+
+/* =====================================================================
+   Hilfsfunktionen
+   ===================================================================== */
+var $ = function (id) { return document.getElementById(id); };
+var code = $("code"), zeilen = $("zeilen"), ausgabe = $("ausgabe");
+var EIN = "    ";
+
+function anfrage(methode, url, daten, fertig) {
+  var x = new XMLHttpRequest();
+  x.open(methode, url, true);
+  x.timeout = 6000;
+  x.onload = function () {
+    if (x.status >= 200 && x.status < 300) {
+      var r = x.responseText;
+      try { r = JSON.parse(r); } catch (e) {}
+      fertig(null, r);
+    } else fertig("HTTP " + x.status);
+  };
+  x.onerror = function () { fertig("weg"); };
+  x.ontimeout = function () { fertig("weg"); };
+  if (daten !== null) x.setRequestHeader("Content-Type", "text/plain; charset=utf-8");
+  x.send(daten);
+}
+
+var meldTimer;
+function meldung(t) {
+  var m = $("meldung"); m.textContent = t; m.style.display = "block";
+  clearTimeout(meldTimer); meldTimer = setTimeout(function () { m.style.display = "none"; }, 2600);
+}
+
+function wiederhole(s, n) { var r = ""; for (var i = 0; i < n; i++) r += s; return r; }
+function einzug(zeile) { return zeile.match(/^[ ]*/)[0]; }
+
+/* ---------- Zeilennummern + Fehlerzeile ---------- */
+var fehlerZeile = 0;
+function zeilenAktualisieren() {
+  var n = code.value.split("\n").length, h = [];
+  for (var i = 1; i <= n; i++) h.push(i === fehlerZeile ? '<span class="fehl">' + i + '</span>' : String(i));
+  zeilen.innerHTML = h.join("\n");
+  zeilen.scrollTop = code.scrollTop;
+}
+code.addEventListener("scroll", function () { zeilen.scrollTop = code.scrollTop; });
+code.addEventListener("input", function () { if (fehlerZeile) fehlerZeile = 0; zeilenAktualisieren(); geaendert = true; });
+
+function setze(text, cursor) {
+  var oben = code.scrollTop;
+  code.value = text;
+  code.focus();
+  code.setSelectionRange(cursor, cursor);
+  code.scrollTop = oben;
+  zeilenAktualisieren(); geaendert = true;
+}
+
+/* ---------- Tastatur: Enter mit Einrückung, Tab ---------- */
+code.addEventListener("keydown", function (e) {
+  var k = e.key || "", s = code.selectionStart, v = code.value;
+  if (k === "Enter" || e.keyCode === 13) {
+    var anf = v.lastIndexOf("\n", s - 1) + 1, zeile = v.slice(anf, s);
+    var ein = einzug(zeile);
+    if (/:\s*(#.*)?$/.test(zeile)) ein += EIN;
+    e.preventDefault();
+    setze(v.slice(0, s) + "\n" + ein + v.slice(code.selectionEnd), s + 1 + ein.length);
+  } else if (k === "Tab" || e.keyCode === 9) {
+    e.preventDefault();
+    if (e.shiftKey) ausruecken(); else einruecken();
+  }
+});
+
+function zeilenBereich() {
+  var v = code.value, s = code.selectionStart, e = code.selectionEnd;
+  var a = v.lastIndexOf("\n", s - 1) + 1;
+  var b = v.indexOf("\n", e); if (b < 0) b = v.length;
+  return { a: a, b: b, s: s, e: e };
+}
+function einruecken() {
+  var v = code.value, r = zeilenBereich();
+  var teil = v.slice(r.a, r.b).split("\n"), n = teil.length;
+  var neu = teil.map(function (z) { return EIN + z; }).join("\n");
+  code.value = v.slice(0, r.a) + neu + v.slice(r.b);
+  code.focus(); code.setSelectionRange(r.s + 4, r.e + 4 * n); zeilenAktualisieren(); geaendert = true;
+}
+function ausruecken() {
+  var v = code.value, r = zeilenBereich(), weg = 0, erst = 0;
+  var neu = v.slice(r.a, r.b).split("\n").map(function (z, i) {
+    var m = Math.min(4, einzug(z).length); weg += m; if (i === 0) erst = m; return z.slice(m);
+  }).join("\n");
+  code.value = v.slice(0, r.a) + neu + v.slice(r.b);
+  code.focus(); code.setSelectionRange(Math.max(r.a, r.s - erst), Math.max(r.a, r.e - weg)); zeilenAktualisieren(); geaendert = true;
+}
+function tippe(t) {
+  var v = code.value, s = code.selectionStart;
+  setze(v.slice(0, s) + t + v.slice(code.selectionEnd), s + t.length);
+}
+
+/* ---------- Tastenleiste (iPad hat kein Tab und kaum Sonderzeichen) ---------- */
+var TASTEN = [["⇥", einruecken], ["⇤", ausruecken], [":"], ["("], [")"], ['"'], ["="], ["=="], ["<"], [">"], ["+"], ["-"], ["*"], ["_"], ["#"], ["[", null], ["]"]];
+TASTEN.forEach(function (t) {
+  var b = document.createElement("button");
+  b.type = "button"; b.textContent = t[0];
+  var tun = function (e) { e.preventDefault(); if (t[1]) t[1](); else tippe(t[0]); };
+  b.addEventListener("touchstart", tun);       // touchstart: Tastatur bleibt offen
+  b.addEventListener("mousedown", tun);
+  $("tasten").appendChild(b);
+});
+
+/* =====================================================================
+   Vorschlagsleiste (zurückhaltende Autovervollständigung)
+   - nach "name."  -> Befehle, die zu diesem Bauteil passen
+   - sonst         -> Namen aus dem EIGENEN Programm + wenige Grundbefehle
+   "|" markiert, wo der Cursor danach steht.
+   ===================================================================== */
+var METHODEN = {
+  Pin: ["on()|", "off()|", "value()|"],
+  ADC: ["read()|", "atten(ADC.ATTN_11DB)|"],
+  PWM: ["freq(|)", "duty_u16(|)", "deinit()|"],
+  DS18X20: ["scan()|", "convert_temp()|", "read_temp(|)"],
+  DHT11: ["measure()|", "temperature()|", "humidity()|"],
+  DHT22: ["measure()|", "temperature()|", "humidity()|"],
+  time: ["sleep(|)", "sleep_ms(|)"]
+};
+var GRUND = ["print(|)", "while True:|", "for i in range(|):", "if |:", "else:|", "elif |:", "range(|)",
+             "True|", "False|", "and |", "or |", "not |", "time|", "def |"];
+
+function ohneMarke(s) { return s.replace("|", ""); }
+
+function eigeneNamen(text) {
+  var namen = [], m, re;
+  re = /^[ ]*([A-Za-z_]\w*)\s*=(?!=)/gm;
+  while ((m = re.exec(text))) if (namen.indexOf(m[1] + "|") < 0) namen.push(m[1] + "|");
+  re = /^[ ]*for\s+([A-Za-z_]\w*)\s+in/gm;
+  while ((m = re.exec(text))) if (namen.indexOf(m[1] + "|") < 0) namen.push(m[1] + "|");
+  re = /^[ ]*def\s+([A-Za-z_]\w*)\s*\(/gm;
+  while ((m = re.exec(text))) namen.push(m[1] + "(|)");
+  return namen;
+}
+
+function typVon(name, text) {
+  if (name === "time") return "time";
+  var m = new RegExp("^[ ]*" + name + "\\s*=\\s*(?:[\\w.]*\\.)?(\\w+)\\(", "m").exec(text);
+  return m ? m[1] : null;
+}
+
+var aktuellesWort = null;
+function vorschlaegeAktualisieren() {
+  var leiste = $("vorschlaege");
+  leiste.innerHTML = "";
+  aktuellesWort = null;
+  if (hat("ohneVs")) return;
+  var v = code.value, s = code.selectionStart;
+  var vorher = v.slice(v.lastIndexOf("\n", s - 1) + 1, s);
+  var liste = [], eigen = {}, wort, m;
+
+  if (/#/.test(vorher) || (vorher.split('"').length % 2 === 0)) {
+    // in Kommentar oder Text: keine Vorschläge
+  } else if ((m = /([A-Za-z_]\w*)\.(\w*)$/.exec(vorher))) {
+    var typ = typVon(m[1], v);
+    wort = m[2];
+    liste = (METHODEN[typ] || []).filter(function (x) { return x.indexOf(wort) === 0 && ohneMarke(x) !== wort; });
+  } else if ((m = /([A-Za-z_]\w*)$/.exec(vorher))) {
+    wort = m[1];
+    var namen = eigeneNamen(v.slice(0, s - wort.length) + v.slice(s));
+    namen.forEach(function (n) { eigen[n] = 1; });
+    liste = namen.concat(GRUND).filter(function (x, i, a) {
+      return x.indexOf(wort) === 0 && ohneMarke(x) !== wort && a.indexOf(x) === i;
+    });
+  }
+
+  if (!liste.length) {
+    leiste.innerHTML = '<span class="leer">Vorschläge erscheinen beim Tippen</span>';
+    return;
+  }
+  aktuellesWort = wort;
+  liste.slice(0, 10).forEach(function (x) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.textContent = (/\|$/.test(x) ? ohneMarke(x) : x.replace("|", "…")).replace(/\s+$/, "");
+    if (eigen[x]) b.className = "eigen";
+    var tun = function (e) {
+      e.preventDefault();
+      var v2 = code.value, s2 = code.selectionStart, start = s2 - aktuellesWort.length;
+      var p = x.indexOf("|"), einfuegen = ohneMarke(x);
+      setze(v2.slice(0, start) + einfuegen + v2.slice(s2), start + (p < 0 ? einfuegen.length : p));
+      vorschlaegeAktualisieren();
+    };
+    b.addEventListener("touchstart", tun);
+    b.addEventListener("mousedown", tun);
+    leiste.appendChild(b);
+  });
+}
+code.addEventListener("input", vorschlaegeAktualisieren);
+code.addEventListener("keyup", function (e) { if (e.key && e.key.indexOf("Arrow") === 0) vorschlaegeAktualisieren(); });
+code.addEventListener("click", vorschlaegeAktualisieren);
+
+/* =====================================================================
+   Bausteine einfügen
+   ===================================================================== */
+var BEKANNT = {};    // alle Setup-Zeilen (für die Kopfbereich-Erkennung)
+BAUSTEINE.forEach(function (gr) { gr.teile.forEach(function (b) {
+  (b.setup || []).forEach(function (s) { s.split("\n").forEach(function (z) { BEKANNT[z] = 1; }); });
+}); });
+
+function istImport(z) { return /^(import|from)\s/.test(z); }
+
+function kopfEnde(lines) {           // Index NACH der letzten Import-/Setup-Zeile
+  var ende = 0;
+  for (var i = 0; i < lines.length; i++) {
+    var z = lines[i];
+    if (z.trim() === "" || /^\s*#/.test(z)) continue;
+    if (istImport(z) || BEKANNT[z]) { ende = i + 1; continue; }
+    break;
+  }
+  return ende;
+}
+function importEnde(lines) {
+  var ende = 0;
+  for (var i = 0; i < lines.length; i++) {
+    var z = lines[i];
+    if (istImport(z)) { ende = i + 1; continue; }
+    if (z.trim() === "" || /^\s*#/.test(z)) continue;
+    break;
+  }
+  return ende;
+}
+
+function sorgeImport(lines, imp) {    // gibt Anzahl hinzugefügter Zeichen zurück
+  var teile = imp.split(":"), modul = teile[0], name = teile[1], i, m;
+  if (name) {
+    for (i = 0; i < lines.length; i++) {
+      m = lines[i].match(/^from\s+(\w+)\s+import\s+(.*)$/);
+      if (m && m[1] === modul) {
+        var namen = m[2].split(",").map(function (x) { return x.trim(); });
+        if (namen.indexOf(name) >= 0 || namen.indexOf("*") >= 0) return 0;
+        var alt = lines[i];
+        lines[i] = alt + ", " + name;
+        return name.length + 2;
+      }
+    }
+    var neu = "from " + modul + " import " + name;
+    lines.splice(0, 0, neu);
+    return neu.length + 1;
+  }
+  for (i = 0; i < lines.length; i++) {
+    if (new RegExp("^import\\s+(.*,\\s*)?" + modul + "(\\s*,.*|\\s+as\\s+\\w+)?\\s*$").test(lines[i])) return 0;
+  }
+  var z = "import " + modul, pos = importEnde(lines);
+  lines.splice(pos, 0, z);
+  return z.length + 1;
+}
+
+function bausteinEinfuegen(b) {
+  var v = code.value, s = code.selectionStart;
+  if (!v.trim()) { v = ""; s = 0; }
+
+  /* 1) Code an der Cursorposition einfügen */
+  var anf = v.lastIndexOf("\n", s - 1) + 1;
+  var endeZ = v.indexOf("\n", s); if (endeZ < 0) endeZ = v.length;
+  var zeile = v.slice(anf, endeZ);
+  var ein, text, pos, blockAuf = /:\s*$/.test(b.code);
+  var sonst = /^(else|elif)\b/.test(b.code);   // "sonst" gehört unter das "if"
+  var weniger = function (e) { return sonst ? e.slice(0, Math.max(0, e.length - 4)) : e; };
+  if (zeile.trim() === "") {
+    // leere Zeile: Einrückung der Zeile davor übernehmen
+    var vorher = v.slice(0, Math.max(0, anf - 1));
+    var vz = vorher.slice(vorher.lastIndexOf("\n") + 1);
+    ein = weniger(zeile.length ? zeile : einzug(vz) + (/:\s*$/.test(vz) ? EIN : ""));
+    text = b.code.split("\n").map(function (z) { return ein + z; }).join("\n");
+    var cur = text.length;
+    if (blockAuf) { text += "\n" + ein + EIN; cur = text.length; }
+    v = v.slice(0, anf) + text + v.slice(endeZ);
+    pos = anf + cur;
+  } else {
+    ein = weniger(einzug(zeile) + (/:\s*$/.test(zeile) ? EIN : ""));
+    text = "\n" + b.code.split("\n").map(function (z) { return ein + z; }).join("\n");
+    if (blockAuf) text += "\n" + ein + EIN;
+    v = v.slice(0, endeZ) + text + v.slice(endeZ);
+    pos = endeZ + text.length;
+  }
+
+  /* 2) Setup-Zeilen oben ergänzen */
+  var lines = v.split("\n"), plus = 0;
+  (b.setup || []).forEach(function (blk) {
+    var erste = blk.split("\n")[0];
+    if (lines.indexOf(erste) >= 0) return;
+    var k = kopfEnde(lines);
+    var neu = blk.split("\n");
+    var zus = blk.length + 1;
+    if (k === 0 || lines[k - 1] === undefined) { k = 0; }
+    Array.prototype.splice.apply(lines, [k, 0].concat(neu));
+    if (k === 0 && lines.length > neu.length && lines[neu.length] !== "") { lines.splice(neu.length, 0, ""); zus += 1; }
+    plus += zus;
+  });
+
+  /* 3) Imports ergänzen */
+  (b.imp || []).forEach(function (imp) { plus += sorgeImport(lines, imp); });
+
+  /* 4) Leerzeile zwischen Imports und Rest */
+  var ie = importEnde(lines);
+  if (ie > 0 && ie < lines.length && lines[ie].trim() !== "" ) { lines.splice(ie, 0, ""); plus += 1; }
+
+  setze(lines.join("\n"), pos + plus);
+}
+
+function bausteineAufbauen() {
+  var ziel = $("bausteine");
+  BAUSTEINE.forEach(function (gr) {
+    var d = document.createElement("div"); d.className = "gruppe";
+    d.innerHTML = '<h3><i style="background:' + gr.f + '"></i>' + gr.g + (gr.p ? "<span>" + gr.p + "</span>" : "") + "</h3>";
+    gr.teile.forEach(function (b) {
+      var k = document.createElement("button");
+      k.type = "button"; k.className = "bs"; k.textContent = b.t; k.style.background = gr.f;
+      k.title = b.code;
+      k.addEventListener("click", function () { bausteinEinfuegen(b); });
+      d.appendChild(k);
+    });
+    ziel.appendChild(d);
+  });
+}
+
+/* =====================================================================
+   Verbindung zum Board
+   ===================================================================== */
+var ab = 0, zustand = "?", geaendert = false, fehlversuche = 0, neustartBis = 0;
+
+function zeigeZustand(z) {
+  var p = $("status");
+  if (z === "laeuft") { p.className = "pille laeuft"; p.textContent = "● läuft"; }
+  else if (z === "bereit") { p.className = "pille bereit"; p.textContent = "bereit"; }
+  else if (z === "neu") { p.className = "pille neu"; p.textContent = "startet neu …"; }
+  else { p.className = "pille weg"; p.textContent = "keine Verbindung"; }
+}
+
+function ausgabeAnhaengen(t) {
+  if (!t) return;
+  var unten = ausgabe.scrollTop + ausgabe.clientHeight >= ausgabe.scrollHeight - 30;
+  t.split(/(\n)/).forEach(function (st) {
+    if (st === "\n") { ausgabe.appendChild(document.createTextNode("\n")); return; }
+    if (!st) return;
+    var sp = document.createElement("span");
+    if (/^(✖|Traceback|  File|\w+Error)/.test(st)) sp.className = "f";
+    else if (/^💡/.test(st)) sp.className = "h";
+    else if (/^✔/.test(st)) sp.className = "ok";
+    else if (/^(▶|■)/.test(st)) sp.className = "s";
+    sp.textContent = st; ausgabe.appendChild(sp);
+  });
+  // Fehlerzeile im Code markieren
+  var re = /File "<string>", line (\d+)/g, m, letzte = 0;
+  while ((m = re.exec(t))) letzte = parseInt(m[1], 10);
+  if (letzte) { fehlerZeile = letzte; zeilenAktualisieren(); }
+  while (ausgabe.childNodes.length > 1500) ausgabe.removeChild(ausgabe.firstChild);
+  if (unten) ausgabe.scrollTop = ausgabe.scrollHeight;
+}
+
+function abfragen() {
+  anfrage("GET", "/ausgabe?ab=" + ab, null, function (err, r) {
+    if (err || typeof r !== "object") {
+      fehlversuche++;
+      if (Date.now() < neustartBis) zeigeZustand("neu");
+      else if (fehlversuche >= 2) zeigeZustand("weg");
+    } else {
+      if (fehlversuche >= 2 || zustand === "?") infoLaden();
+      fehlversuche = 0; neustartBis = 0;
+      if (r.n < ab) ab = 0;          // Board wurde neu gestartet
+      else { ausgabeAnhaengen(r.text); ab = r.n; }
+      zustand = r.zustand; zeigeZustand(zustand);
+    }
+    setTimeout(abfragen, zustand === "laeuft" ? 500 : 1000);
+  });
+}
+
+function infoLaden() {
+  anfrage("GET", "/info", null, function (err, r) {
+    if (err || typeof r !== "object") return;
+    $("boardname").textContent = r.name + (r.modus === "router" ? " · Router " + r.ip : " · eigenes WLAN");
+    document.title = r.name + " – Technik-Editor";
+    $("autostart").checked = !!r.autostart;
+  });
+}
+
+function neustartAnzeigen() {
+  neustartBis = Date.now() + 15000; zeigeZustand("neu");
+  ausgabeAnhaengen("\n■ Das Programm hing in einer Schleife ohne Pause – das Board startet neu (ein paar Sekunden).\n💡 Tipp: In Schleifen immer eine kleine Pause einbauen, z.B. time.sleep_ms(10)\n");
+}
+
+if (false) $("start").addEventListener("click", function () {
+  fehlerZeile = 0; zeilenAktualisieren();
+  ausgabe.innerHTML = "";
+  anfrage("POST", "/start", code.value, function (err, r) {
+    if (err) { meldung("Keine Verbindung zum Board – WLAN prüfen"); return; }
+    if (r.neustart) { neustartAnzeigen(); return; }
+    ab = r.ab; geaendert = false; zustand = "laeuft"; zeigeZustand(zustand);
+  });
+});
+$("stopp").addEventListener("click", function () {
+  anfrage("POST", "/stopp", "", function (err, r) {
+    if (err) { meldung("Keine Verbindung zum Board"); return; }
+    if (r.neustart) neustartAnzeigen();
+  });
+});
+$("speichern").addEventListener("click", function () {
+  anfrage("POST", "/speichern", code.value, function (err) {
+    if (err) meldung("Speichern hat nicht geklappt"); else { geaendert = false; meldung("Auf dem Board gespeichert ✔"); }
+  });
+});
+$("autostart").addEventListener("change", function () {
+  var an = $("autostart").checked;
+  var los = function () {
+    anfrage("POST", "/autostart?an=" + (an ? 1 : 0), "", function (err) {
+      if (err) meldung("Hat nicht geklappt"); else meldung(an ? "Programm startet ab jetzt beim Einschalten" : "Autostart aus");
+    });
+  };
+  if (an) anfrage("POST", "/speichern", code.value, los); else los();
+});
+$("leeren").addEventListener("click", function () { ausgabe.innerHTML = ""; });
+
+/* ---------- Beispiele ---------- */
+Object.keys(BEISPIELE).forEach(function (n) {
+  var o = document.createElement("option"); o.value = n; o.textContent = n; $("beispiele").appendChild(o);
+});
+$("beispiele").addEventListener("change", function () {
+  var n = this.value; this.value = "";
+  if (!n) return;
+  var los = function () { fehlerZeile = 0; setze(BEISPIELE[n], 0); code.scrollTop = 0; };
+  if (code.value.trim()) frage("Dein aktuelles Programm wird ersetzt. Weiter?", los); else los();
+});
+
+/* ---------- Pinbelegung ---------- */
+/* =====================================================================
+   Pinbelegung: Reiter "Tabelle" und "Board"
+   Layout = 30-Pin-ESP32 auf der Schraubklemmen-Erweiterung (von oben,
+   USB-Buchse unten). Beschriftung wie auf dem Board aufgedruckt.
+   ===================================================================== */
+var LINKS  = ["EN","VP","VN","D34","D35","D32","D33","D25","D26","D27","D14","D12","D13","GND","VIN"];
+var RECHTS = ["D23","D22","TX0","RX0","D21","D19","D18","D5","TX2","RX2","D4","D2","D15","GND","3V3"];
+var GPIO = {VP:36, VN:39, TX0:1, RX0:3, TX2:17, RX2:16};
+var BELEGUNG = {
+  "D2":  {t:"LED (blau, auf Board)", f:"#93c5fd"},
+  "D25": {t:"Ampel rot",   f:"#fca5a5"},
+  "D26": {t:"Ampel gelb",  f:"#fde047"},
+  "D27": {t:"Ampel grün",  f:"#86efac"},
+  "D4":  {t:"Taster",      f:"#a5b4fc"},
+  "D34": {t:"Poti / Licht",f:"#c4b5fd"},
+  "D23": {t:"Summer",      f:"#f9a8d4"},
+  "D13": {t:"Servo",       f:"#6ee7b7"},
+  "D32": {t:"Motor IN1",   f:"#fdba74"},
+  "D33": {t:"Motor IN2",   f:"#fdba74"},
+  "D19": {t:"Temperatur",  f:"#67e8f9"},
+  "TX2": {t:"Ultraschall Trig", f:"#d8b4fe"},
+  "RX2": {t:"Ultraschall Echo", f:"#d8b4fe"},
+  "GND": {t:"Minus (GND)", f:"#d1d5db"},
+  "3V3": {t:"Plus 3,3 V",  f:"#fecaca"},
+  "VIN": {t:"5 V vom USB", f:"#fed7aa"},
+  "TX0": {t:"nicht benutzen (USB)", f:"#f3f4f6", x:1},
+  "RX0": {t:"nicht benutzen (USB)", f:"#f3f4f6", x:1},
+  "EN":  {t:"Reset", f:"#f3f4f6", x:1}
+};
+/* Was kann welcher Pin? (klassischer ESP32, WLAN an) */
+var FAEHIG = {
+  D4:"frei", D13:"frei", D14:"frei", D18:"frei", D19:"frei", D21:"frei", D22:"frei", D23:"frei",
+  D25:"frei", D26:"frei", D27:"frei", TX2:"frei", RX2:"frei",
+  D32:"analog", D33:"analog",
+  D34:"nurEin", D35:"nurEin", VP:"nurEin", VN:"nurEin",
+  D2:"vorsicht", D5:"vorsicht", D12:"vorsicht", D15:"vorsicht",
+  TX0:"nein", RX0:"nein", EN:"nein", GND:"gnd", "3V3":"plus", VIN:"vin"
+};
+var KAT = {
+  frei:     {t:"Aus/Ein · PWM",          f:"#86efac"},
+  analog:   {t:"Aus/Ein · Analog",        f:"#5eead4"},
+  nurEin:   {t:"nur Eingang · Analog",          f:"#93c5fd"},
+  vorsicht: {t:"Vorsicht",                      f:"#fde68a"},
+  nein:     {t:"nicht benutzen",                f:"#f3f4f6", x:1},
+  gnd:      {t:"Minus (GND)",                   f:"#d1d5db"},
+  plus:     {t:"Plus 3,3 V",                    f:"#fecaca"},
+  vin:      {t:"5 V vom USB",                   f:"#fed7aa"}
+};
+var VORSICHT = {D2:"Vorsicht: blaue LED", D5:"Vorsicht: Start-Pin", D12:"Vorsicht: Start-Pin", D15:"Vorsicht: Start-Pin"};
+var BRAUCHE = [
+  ["💡 Ausgang (LED, Summer, Servo, Motor)", ["frei","analog"]],
+  ["🔘 Taster / digitaler Sensor", ["frei","analog"]],
+  ["🌗 Analoger Sensor (LDR, Poti)", ["analog","nurEin"]]
+];
+function pinsMit(kats) {
+  return Object.keys(FAEHIG).filter(function (l) { return kats.indexOf(FAEHIG[l]) >= 0; });
+}
+
+var TABELLE = [
+  ["LED auf dem Board (blau)", ["D2"], "Pin(2)"],
+  ["Ampel rot / gelb / grün", ["D25","D26","D27"], "Pin(25) / Pin(26) / Pin(27)"],
+  ["Taster (andere Seite an GND)", ["D4","GND"], "Pin(4)"],
+  ["Poti / Lichtsensor (LDR)", ["D34"], "Pin(34)"],
+  ["Summer (passiv)", ["D23"], "Pin(23)"],
+  ["Servo (Signal)", ["D13"], "Pin(13)"],
+  ["Motor-Treiber IN1 / IN2", ["D32","D33"], "Pin(32) / Pin(33)"],
+  ["Temperatur DS18B20 oder DHT11", ["D19"], "Pin(19)"],
+  ["Ultraschall Trig / Echo", ["TX2","RX2"], "Pin(17) / Pin(16)"],
+  ["Stromversorgung für Bauteile", ["3V3","GND"], "–"]
+];
+
+function nummer(l) { return GPIO[l] !== undefined ? GPIO[l] : (/^D\d+$/.test(l) ? parseInt(l.slice(1), 10) : null); }
+
+function boardSVG(markiert, modus, gewaehlt) {
+  markiert = markiert || [];
+  var y0 = 70, dy = 36, h = [];
+  var W = 780, H = 640;
+  h.push('<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block" font-family="-apple-system,Segoe UI,Arial,sans-serif">');
+  // Erweiterungsplatine
+  h.push('<rect x="160" y="20" width="460" height="600" rx="14" fill="#1f2937"/>');
+  h.push('<circle cx="185" cy="40" r="9" fill="#fff"/><circle cx="595" cy="40" r="9" fill="#fff"/><circle cx="185" cy="600" r="9" fill="#fff"/><circle cx="595" cy="600" r="9" fill="#fff"/>');
+  // Schraubklemmen
+  h.push('<rect x="170" y="' + (y0 - 22) + '" width="42" height="' + (15 * dy + 8) + '" rx="4" fill="#15803d"/>');
+  h.push('<rect x="568" y="' + (y0 - 22) + '" width="42" height="' + (15 * dy + 8) + '" rx="4" fill="#15803d"/>');
+  // ESP32-Board
+  h.push('<rect x="300" y="36" width="180" height="570" rx="10" fill="#111827" stroke="#4b5563"/>');
+  h.push('<rect x="320" y="52" width="140" height="170" rx="6" fill="#9ca3af"/>');
+  h.push('<text x="390" y="130" text-anchor="middle" font-size="22" font-weight="700" fill="#374151">ESP-32</text>');
+  h.push('<text x="390" y="155" text-anchor="middle" font-size="12" fill="#374151">WiFi + Bluetooth</text>');
+  h.push('<rect x="368" y="572" width="44" height="34" rx="5" fill="#d1d5db"/><text x="390" y="594" text-anchor="middle" font-size="11" fill="#111">USB-C</text>');
+  h.push('<rect x="318" y="562" width="26" height="26" rx="4" fill="#e5e7eb"/><text x="331" y="556" text-anchor="middle" font-size="12" fill="#e5e7eb">EN</text>');
+  h.push('<rect x="436" y="562" width="26" height="26" rx="4" fill="#e5e7eb"/><text x="449" y="556" text-anchor="middle" font-size="12" fill="#e5e7eb">BOOT</text>');
+  h.push('<circle cx="390" cy="530" r="7" fill="#3b82f6"/><text x="390" y="515" text-anchor="middle" font-size="11" fill="#93c5fd">LED (D2)</text>');
+
+  function seite(liste, links) {
+    liste.forEach(function (l, i) {
+      var y = y0 + i * dy, cx = links ? 191 : 589;
+      var b = BELEGUNG[l], an = markiert.indexOf(l) >= 0;
+      if (modus === "allgemein") {
+        var k = KAT[FAEHIG[l]];
+        b = {t: VORSICHT[l] || k.t, f: k.f, x: k.x};
+      }
+      var n = nummer(l);
+      h.push('<g class="pinG" data-l="' + l + '" style="cursor:pointer">');
+      h.push('<rect x="' + (links ? 0 : 560) + '" y="' + (y - 17) + '" width="220" height="34" fill="' + (gewaehlt === l ? "rgba(37,99,235,.18)" : "transparent") + '"/>');
+      if (n !== null) {
+        var bx2 = links ? 268 : 484;
+        h.push('<rect x="' + bx2 + '" y="' + (y - 10) + '" width="26" height="20" rx="5" fill="#2563eb"/>');
+        h.push('<text x="' + (bx2 + 13) + '" y="' + (y + 5) + '" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">' + n + '</text>');
+      }
+      // Klemme
+      h.push('<circle cx="' + cx + '" cy="' + y + '" r="12" fill="#0f172a" stroke="' + (b && !b.x ? b.f : "#4b5563") + '" stroke-width="' + (b && !b.x ? 4 : 2) + '"' + (an ? ' class="blink"' : '') + '/>');
+      // Aufdruck auf der Platine
+      h.push('<text x="' + (links ? 222 : 558) + '" y="' + (y + 5) + '" text-anchor="' + (links ? "start" : "end") + '" font-size="16" font-weight="700" fill="#f9fafb">' + l + '</text>');
+      // Bauteil-Schild außen
+      if (b) {
+        var bx = links ? 6 : 632, bw = 142;
+        h.push('<line x1="' + (links ? bx + bw : cx + 12) + '" y1="' + y + '" x2="' + (links ? cx - 12 : bx) + '" y2="' + y + '" stroke="' + (b.x ? "#d1d5db" : b.f) + '" stroke-width="2"' + (b.x ? ' stroke-dasharray="3 3"' : '') + '/>');
+        h.push('<rect x="' + bx + '" y="' + (y - 13) + '" width="' + bw + '" height="26" rx="6" fill="' + b.f + '"' + (an ? ' class="blink"' : '') + (b.x ? ' stroke="#d1d5db" stroke-dasharray="3 3"' : '') + '/>');
+        h.push('<text x="' + (bx + bw / 2) + '" y="' + (y + 5) + '" text-anchor="middle" font-size="13" fill="' + (b.x ? "#9ca3af" : "#111") + '"' + (b.x ? ' font-style="italic"' : ' font-weight="600"') + '>' + b.t + '</text>');
+      }
+      h.push('</g>');
+    });
+  }
+  seite(LINKS, true); seite(RECHTS, false);
+  h.push('</svg>');
+  return h.join("");
+}
+
+
+function pinInfo(l) {
+  var n = nummer(l), k = FAEHIG[l];
+  if (k === "gnd") return "<b>GND</b> = Minus (Masse). Hier kommt die andere Seite von Taster, LED (über Vorwiderstand) und Sensoren hin. <b>Im Code kommt GND nicht vor.</b>";
+  if (k === "plus") return "<b>3V3</b> = Plus 3,3 V, z.B. für Sensoren oder den Spannungsteiler mit LDR. <b>Im Code kommt 3V3 nicht vor.</b>";
+  if (k === "vin") return "<b>VIN</b> = 5 V direkt vom USB-Kabel, z.B. für Servo oder Motortreiber. Nie an einen anderen Pin des Boards anschließen! <b>Im Code kommt VIN nicht vor.</b>";
+  if (l === "EN") return "<b>EN</b> ist die Reset-Leitung (wie die EN-Taste). Nicht benutzen.";
+  if (k === "nein") return "<b>" + l + "</b> (im Code wäre es " + n + ") – darüber läuft die USB-Verbindung zum Computer. <b>Nicht benutzen!</b>";
+  var t = "<b>" + l + "</b> heißt im Code <code>Pin(" + n + ")</code>";
+  if (l !== "D" + n) t += " &nbsp;⚠ Die Zahl steht nicht auf dem Board!";
+  t += "<br>Beispiele:";
+  var bsp = [];
+  if (k !== "nurEin") {
+    bsp.push("led = Pin(" + n + ", Pin.OUT)", "taster = Pin(" + n + ", Pin.IN, Pin.PULL_UP)", "summer = PWM(Pin(" + n + "))");
+  }
+  if (k === "analog" || k === "nurEin") bsp.push("sensor = ADC(Pin(" + n + "))");
+  if (k === "nurEin") bsp.push("taster = Pin(" + n + ", Pin.IN)     # nur mit eigenem Widerstand");
+  t += '<pre style="margin:6px 0 0;background:#f1f5f9;padding:8px;border-radius:6px;font-size:14px;white-space:pre-wrap">' + bsp.join("\n") + "</pre>";
+  if (k === "nurEin") t += "Nur Eingang: hier keine LED, keinen Summer und keinen Motor anschließen.";
+  if (l === "D2") t += "⚠ D2 ist mit der blauen LED auf dem Board verbunden – sie leuchtet immer mit.";
+  if (l === "D12") t += "⚠ Start-Pin: Ist D12 beim Einschalten HIGH, startet das Board nicht. Für Taster und Sensoren lieber einen grünen Pin nehmen.";
+  if (l === "D5" || l === "D15") t += "⚠ Start-Pin: gibt beim Einschalten kurz Signale aus. Für LEDs meist okay, für Taster/Sensoren lieber einen grünen Pin nehmen.";
+  return t;
+}
+
+function pinDialog(reiter, markiert, gewaehlt) {
+  var reiterKnopf = function (r, t) {
+    return '<button class="klein reiter" data-r="' + r + '"' + (reiter === r ? ' style="background:#1d2330;color:#fff"' : '') + '>' + t + '</button> ';
+  };
+  var kopf = '<h2 style="margin-bottom:10px">📌 Pinbelegung</h2><div style="margin-bottom:12px">' +
+    reiterKnopf("allgemein", "Was kann welcher Pin?") + reiterKnopf("board", "Beispiel-Belegung") + reiterKnopf("tabelle", "Tabelle") + '</div>';
+  var inhalt, codeHinweis = '<p style="font-size:14px;margin:10px 0 0">Ansicht von oben, USB-Buchse unten. <b>Im Code steht nur die Zahl</b> (blaues Kästchen): D25 → <code>Pin(25)</code>, ' +
+      'TX2 → <code>Pin(17)</code>, RX2 → <code>Pin(16)</code>, VP → <code>Pin(36)</code>, VN → <code>Pin(39)</code>.</p>';
+  if (reiter === "allgemein") {
+    inhalt = '<div style="margin-bottom:8px"><b style="font-size:15px">Ich brauche einen Pin für …</b><br>' +
+      BRAUCHE.map(function (x, i) { return '<button class="klein brauche" data-i="' + i + '" style="margin:4px 4px 0 0">' + x[0] + '</button>'; }).join("") + '</div>' +
+      boardSVG(markiert, "allgemein", gewaehlt) + '<div id="pinInfo" style="margin-top:10px;padding:10px 12px;border:2px solid #bfdbfe;border-radius:10px;background:#eff6ff;font-size:15px">' + (gewaehlt ? pinInfo(gewaehlt) : '👆 Tippe auf einen Anschluss, um zu sehen, wie er im Code heißt. Das <b style="color:#2563eb">blaue Kästchen</b> zeigt immer die Zahl für den Code.') + '</div>' + codeHinweis +
+      '<div class="warn" style="background:#f8fafc;border-color:#e2e8f0">' +
+      '<b style="color:#15803d">■ Grün</b> – für fast alles: LEDs, Taster, Summer, Servo, Motor.<br>' +
+      '<b style="color:#0f766e">■ Türkis</b> (D32, D33) – wie Grün, zusätzlich für analoge Sensoren.<br>' +
+      '<b style="color:#1d4ed8">■ Blau</b> (D34, D35, VP, VN) – nur zum Messen (LDR, Poti). Keine LEDs! Taster nur mit eigenem Widerstand, weil diese Pins kein <code>Pin.PULL_UP</code> haben.<br>' +
+      '<b style="color:#a16207">■ Gelb</b> – geht, kann aber beim Einschalten stören. Nur nehmen, wenn die grünen nicht reichen. D2 ist mit der blauen LED verbunden.<br>' +
+      '<b style="color:#6b7280">■ Grau</b> – nicht benutzen.</div>';
+  } else if (reiter === "board") {
+    inhalt = boardSVG(markiert, null, gewaehlt) + '<div id="pinInfo" style="margin-top:10px;padding:10px 12px;border:2px solid #bfdbfe;border-radius:10px;background:#eff6ff;font-size:15px">' + (gewaehlt ? pinInfo(gewaehlt) : '👆 Tippe auf einen Anschluss, um zu sehen, wie er im Code heißt. Das <b style="color:#2563eb">blaue Kästchen</b> zeigt immer die Zahl für den Code.') + '</div>' + codeHinweis;
+  } else {
+    inhalt = '<p style="font-size:14px;color:#6b7280;margin-top:0">Beispiel-Belegung der Bausteine. Zeile antippen → Anschluss wird auf dem Board gezeigt.</p>' +
+      '<table><tr><th>Bauteil</th><th>Klemme auf dem Board</th><th>Im Code</th></tr>' +
+      TABELLE.map(function (z, i) {
+        return '<tr class="pinZeile" data-i="' + i + '" style="cursor:pointer"><td>' + z[0] + '</td><td><b>' + z[1].join(" / ") + '</b></td><td><code>' + z[2] + '</code></td></tr>';
+      }).join("") + '</table>' +
+      '<div class="warn">⚠ LEDs immer mit Vorwiderstand (z.B. 220 Ω).<br>⚠ Das Board arbeitet mit 3,3 V – keine 5 V an die Pins! Beim Ultraschallsensor HC-SR04 einen Spannungsteiler am Echo-Pin nutzen oder die 3,3-V-Version (HC-SR04P).<br>⚠ D34, D35, VP, VN sind nur Eingänge.<br>⚠ TX0 / RX0 nicht benutzen – darüber läuft die USB-Verbindung.<br>⚠ Analoge Sensoren nur an D32–D35, VP, VN (andere funktionieren nicht, solange WLAN an ist).</div>';
+  }
+  $("dlgInhalt").innerHTML = kopf + inhalt + '<div class="dlgKnoepfe"><button class="klein" id="dlgZu">Schließen</button></div>';
+  $("dlg").className = "offen";
+  $("dlgZu").onclick = dlgZu;
+  Array.prototype.forEach.call(document.querySelectorAll(".reiter"), function (k) {
+    k.onclick = function () { pinDialog(k.getAttribute("data-r")); };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".pinZeile"), function (z) {
+    z.onclick = function () { pinDialog("board", TABELLE[+z.getAttribute("data-i")][1]); };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".pinG"), function (g) {
+    g.addEventListener("click", function () {
+      var l = g.getAttribute("data-l");
+      var oben = $("dlgInhalt").scrollTop;
+      pinDialog(reiter, [l], l);
+      $("dlgInhalt").scrollTop = oben;
+      var box = $("pinInfo"); if (box && box.scrollIntoView) box.scrollIntoView({block: "nearest"});
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".brauche"), function (k) {
+    var i = +k.getAttribute("data-i");
+    if (markiert && markiert.join() === pinsMit(BRAUCHE[i][1]).join()) { k.style.background = "#1d2330"; k.style.color = "#fff"; }
+    k.onclick = function () { pinDialog("allgemein", pinsMit(BRAUCHE[i][1])); };
+  });
+}
+$("pinsKnopf").addEventListener("click", function () { pinDialog("allgemein"); });
+$("dlg").addEventListener("click", function (e) { if (e.target === this) this.className = ""; });
+
+/* ---------- Neu (alles löschen) ---------- */
+$("neu").addEventListener("click", function () {
+  var los = function () { fehlerZeile = 0; setze("", 0); };
+  if (code.value.trim()) frage("Wirklich alles löschen? Nicht gespeicherter Code geht verloren.", los); else los();
+});
+
+/* ---------- Bausteine / Vorschläge ein-/ausblenden (wird auf dem Gerät gemerkt) ---------- */
+function klasse(name, an) {
+  var k = " " + document.body.className + " ";
+  k = k.replace(" " + name + " ", " ");
+  if (an) k += name;
+  document.body.className = k.replace(/^\s+|\s+$/g, "");
+}
+function hat(name) { return (" " + document.body.className + " ").indexOf(" " + name + " ") >= 0; }
+function merke(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function lese(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+
+function bausteineZeigen(an) {
+  klasse("ohneBs", !an);
+  $("bsKnopf").textContent = "🧩 Bausteine: " + (an ? "an" : "aus");
+  merke("bausteine", an ? "1" : "0");
+}
+function vorschlaegeZeigen(an) {
+  klasse("ohneVs", !an);
+  $("vsKnopf").textContent = "💡 Vorschläge: " + (an ? "an" : "aus");
+  merke("vorschlaege", an ? "1" : "0");
+}
+$("bsKnopf").addEventListener("click", function () { bausteineZeigen(hat("ohneBs")); });
+$("vsKnopf").addEventListener("click", function () { vorschlaegeZeigen(hat("ohneVs")); vorschlaegeAktualisieren(); });
+bausteineZeigen(lese("bausteine") !== "0");
+vorschlaegeZeigen(lese("vorschlaege") !== "0");
+
+/* ---------- Aufs iPad speichern / kopieren ---------- */
+function dlgZu() { $("dlg").className = ""; }
+$("herunterladen").addEventListener("click", function () {
+  $("dlgInhalt").innerHTML =
+    '<h2>⬇ Programm aufs iPad</h2>' +
+    '<label>Dateiname (z.B. Ampel_Mia):</label>' +
+    '<input type="text" id="dateiname" value="programm" autocapitalize="off" autocorrect="off">' +
+    '<div class="dlgKnoepfe">' +
+    '<button class="klein" id="alsDatei">⬇ Als Datei speichern</button>' +
+    '<button class="klein" id="kopieren">📋 Code kopieren</button>' +
+    '<button class="klein" id="dlgZu">Schließen</button></div>' +
+    '<p style="font-size:14px;color:#6b7280">Die Datei wird als <b>.txt</b> gespeichert und landet in der App <b>Dateien</b>. In der Schule öffnest du sie im Editor mit <b>⬆ Datei öffnen</b>. ' +
+    'Von dort kann man sie per Mail, AirDrop oder Lernplattform verschicken. ' +
+    'Falls das Speichern nicht klappt: „Code kopieren“ und z.B. in eine Mail oder Notiz einfügen.</p>';
+  $("dlg").className = "offen";
+  $("dlgZu").onclick = dlgZu;
+  $("alsDatei").onclick = function () {
+    var name = ($("dateiname").value || "programm").replace(/[^\wäöüÄÖÜß\-]+/g, "_").replace(/\.(py|txt)$/, "") + ".txt";
+    var weiter = function (dl) {
+      if (!dl) { meldung("Speichern geht hier nicht – bitte „Code kopieren“"); return; }
+      dl.save({ filename: name, data: code.value }).then(function () {
+        meldung("Gespeichert: " + name); dlgZu();
+      }, function (e) {
+        meldung(e && e.code === "declined" ? "Nicht gespeichert" : "Speichern ging nicht – bitte „Code kopieren“");
+      });
+    };
+    if (window.claude && window.claude.use) window.claude.use("downloads").then(weiter, function () { weiter(null); });
+    else {
+      // außerhalb von Claude (z.B. Lernplattform): normaler Download
+      var blob = new Blob([code.value], { type: "text/plain;charset=utf-8" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = name;
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.parentNode.removeChild(a); }, 4000);
+      meldung("Gespeichert: " + name); dlgZu();
+    }
+  };
+  $("kopieren").onclick = function () {
+    var t = document.createElement("textarea");
+    t.value = code.value; t.setAttribute("readonly", "");
+    t.style.position = "fixed"; t.style.opacity = "0";
+    document.body.appendChild(t);
+    t.focus(); t.setSelectionRange(0, t.value.length);
+    var ok = false; try { ok = document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(t);
+    meldung(ok ? "Code kopiert – jetzt z.B. in eine Mail einfügen" : "Kopieren ging nicht – Code markieren und kopieren");
+    if (ok) dlgZu();
+  };
+});
+
+/* ---------- Datei vom iPad öffnen ---------- */
+$("oeffnenKnopf").addEventListener("click", function () { $("oeffnen").value = ""; $("oeffnen").click(); });
+$("oeffnen").addEventListener("change", function () {
+  var f = this.files && this.files[0];
+  if (!f) return;
+  var r = new FileReader();
+  r.onload = function () {
+    var los = function () {
+      fehlerZeile = 0; setze(String(r.result).replace(/\r\n/g, "\n").replace(/\t/g, EIN), 0); code.scrollTop = 0;
+      meldung("Geöffnet: " + f.name);
+    };
+    if (code.value.trim()) frage("Dein aktuelles Programm wird durch die Datei „" + f.name + "“ ersetzt. Weiter?", los); else los();
+  };
+  r.readAsText(f);
+});
+
+
+
+/* ---------- Start ---------- */
+bausteineAufbauen();
+zeilenAktualisieren();
+/* =====================================================================
+   ÜBUNGSMODUS (ohne Board)
+   ===================================================================== */
+function frage(text, ja) {
+  $("dlgInhalt").innerHTML = '<p id="fText" style="font-size:17px;margin-top:0"></p><div class="dlgKnoepfe"><button class="klein" id="fJa" style="background:#1d2330;color:#fff">Ja</button><button class="klein" id="fNein">Abbrechen</button></div>';
+  $("fText").textContent = text;
+  $("dlg").className = "offen";
+  $("fJa").onclick = function () { dlgZu(); ja(); };
+  $("fNein").onclick = dlgZu;
+}
+
+/* Entwurf im Browser merken, damit nichts verloren geht */
+var speicherTimer;
+code.addEventListener("input", function () {
+  clearTimeout(speicherTimer);
+  speicherTimer = setTimeout(function () { merke("uebung_code", code.value); }, 500);
+});
+
+/* ---------- Prüfen: typische Anfängerfehler finden ---------- */
+var BEFEHLE = {
+  Pin: ["on", "off", "value", "init", "irq", "toggle", "OUT", "IN", "PULL_UP", "PULL_DOWN"],
+  ADC: ["read", "read_u16", "read_uv", "atten", "width"],
+  PWM: ["freq", "duty_u16", "duty", "duty_ns", "deinit", "init"]
+};
+var PINS_OK = [0, 2, 4, 5, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33, 34, 35, 36, 39];
+var EINGEBAUT = ["print", "range", "int", "str", "float", "len", "abs", "min", "max", "round", "bool", "list", "sum"];
+var SCHLUESSEL = ["if", "elif", "else", "while", "for", "def", "return", "and", "or", "not", "in", "import", "from", "as", "pass", "break", "continue", "True", "False", "None"];
+
+function ohneTexte(z) {
+  var t = z.replace(/"[^"]*"/g, '""').replace(/'[^']*'/g, "''");
+  var i = t.indexOf("#");
+  return i >= 0 ? t.slice(0, i) : t;
+}
+
+function pruefen() {
+  var alles = code.value.replace(/\t/g, EIN);
+  var zeilen = alles.split("\n");
+  var fehler = [], warn = [], m, re;
+  var F = function (n, t) { fehler.push({ n: n, t: t }); };
+  var W = function (n, t) { warn.push({ n: n, t: t }); };
+
+  var definiert = {}, importiert = {};
+  re = /^[ ]*([A-Za-z_]\w*)\s*=(?!=)/gm; while ((m = re.exec(alles))) definiert[m[1]] = 1;
+  re = /^[ ]*for\s+([A-Za-z_]\w*)\s+in/gm; while ((m = re.exec(alles))) definiert[m[1]] = 1;
+  re = /^[ ]*def\s+([A-Za-z_]\w*)\s*\(([^)]*)\)/gm;
+  while ((m = re.exec(alles))) {
+    definiert[m[1]] = 1;
+    m[2].split(",").forEach(function (p) { p = p.split("=")[0].trim(); if (p) definiert[p] = 1; });
+  }
+  re = /^\s*import\s+(.+)$/gm;
+  while ((m = re.exec(alles))) m[1].split(",").forEach(function (x) { var p = x.trim().split(/\s+as\s+/); importiert[(p[1] || p[0]).trim()] = 1; });
+  re = /^\s*from\s+\w+\s+import\s+(.+)$/gm;
+  while ((m = re.exec(alles))) m[1].split(",").forEach(function (x) { var p = x.trim().split(/\s+as\s+/); importiert[(p[1] || p[0]).trim()] = 1; });
+
+  var vorherEin = 0, erwarte = false, blockZeile = 0, gemeldet = {};
+  var einmal = function (key, n, t) { if (!gemeldet[key]) { gemeldet[key] = 1; F(n, t); } };
+
+  zeilen.forEach(function (roh, i) {
+    var n = i + 1, t = ohneTexte(roh).trim();
+    if (!t) return;
+    var ein = einzug(roh).length;
+    if (ein % 4 !== 0) W(n, "Die Einrückung ist " + ein + " Leerzeichen. Üblich sind 4, 8, 12 …");
+    if (erwarte) {
+      if (ein <= vorherEin) F(n, "Diese Zeile muss eingerückt sein, weil Zeile " + blockZeile + " mit einem Doppelpunkt endet.");
+      erwarte = false;
+    } else if (ein > vorherEin) {
+      F(n, "Diese Zeile ist zu weit eingerückt. Oder fehlt in der Zeile davor ein Doppelpunkt?");
+    }
+    var kw = /^(if|elif|else|while|for|def)\b/.exec(t);
+    if (kw && !/:\s*$/.test(t)) { F(n, "Am Ende von „" + kw[1] + " …“ fehlt der Doppelpunkt :"); erwarte = true; blockZeile = n; }
+    if (/:\s*$/.test(t)) { erwarte = true; blockZeile = n; }
+
+    var auf = (t.match(/\(/g) || []).length, zu = (t.match(/\)/g) || []).length;
+    if (auf > zu) F(n, "Hier fehlt eine schließende Klammer )");
+    else if (zu > auf) F(n, "Hier ist eine Klammer ) zu viel.");
+    var mitText = roh, k = mitText.indexOf("#");
+    if (k >= 0 && mitText.slice(0, k).split('"').length % 2 === 1) mitText = mitText.slice(0, k);
+    if ((mitText.split('"').length - 1) % 2 === 1) F(n, "Hier fehlt ein Anführungszeichen \"");
+
+    if (/\bpin\b/.test(t) && !definiert.pin) F(n, "„Pin“ schreibt man mit großem P.");
+    if (/\btrue\b/.test(t)) F(n, "„True“ schreibt man mit großem T.");
+    if (/\bfalse\b/.test(t)) F(n, "„False“ schreibt man mit großem F.");
+    var gross = /^(While|If|Else|Elif|For|Def|Print|Import|From)\b/.exec(t);
+    if (gross) F(n, "„" + gross[1] + "“ schreibt man klein: „" + gross[1].toLowerCase() + "“.");
+    if (/sleep(_ms)?\(\s*\d+\s*,\s*\d+\s*\)/.test(t)) F(n, "Kommazahlen schreibt man mit Punkt: 0.5 statt 0,5");
+    if (/^(if|elif|while)\b/.test(t) && /[^=!<>]=[^=]/.test(t.replace(/^(if|elif|while)/, " "))) F(n, "Zum Vergleichen braucht man == (zwei Gleichheitszeichen).");
+
+    re = /\b([A-Za-z_]\w*)\.(\w+)/g;
+    while ((m = re.exec(t))) {
+      var nm = m[1];
+      if (definiert[nm]) {
+        var typ = typVon(nm, alles), erlaubt = BEFEHLE[typ];
+        if (erlaubt && erlaubt.indexOf(m[2]) < 0)
+          F(n, "„" + nm + "." + m[2] + "“ gibt es nicht. Erlaubt sind z.B.: " + erlaubt.slice(0, 3).map(function (x) { return nm + "." + x + "()"; }).join(", "));
+        continue;
+      }
+      if (importiert[nm]) continue;
+      if (nm === "time") einmal("imp-time", n, "Für „time.…“ fehlt oben die Zeile: import time");
+      else if (nm === "Pin" || nm === "ADC") continue;
+      else if (/^\d/.test(nm)) continue;
+      else F(n, "„" + nm + "“ ist unbekannt. Tippfehler, oder wurde es oben nicht eingerichtet?");
+    }
+    ["Pin", "ADC", "PWM", "time_pulse_us"].forEach(function (w) {
+      if (w === "Pin" && /import\s.*\bpin\b/.test(alles)) return;
+      if (new RegExp("\\b" + w + "\\b").test(t) && !importiert[w] && !/^\s*(from|import)\b/.test(t))
+        einmal("imp-" + w, n, "Für „" + w + "“ fehlt oben: from machine import " + w);
+    });
+    re = /\b([a-z_]\w*)\s*\(/g;
+    while ((m = re.exec(t))) {
+      var f = m[1];
+      if (/\.\s*$/.test(t.slice(0, m.index))) continue;
+      if (definiert[f] || importiert[f] || EINGEBAUT.indexOf(f) >= 0 || SCHLUESSEL.indexOf(f) >= 0) continue;
+      F(n, "Den Befehl „" + f + "(…)“ gibt es nicht. Tippfehler?");
+    }
+    re = /\bPin\(\s*(\d+)([^)]*)\)/g;
+    while ((m = re.exec(t))) {
+      var p = +m[1];
+      if (p >= 6 && p <= 11) F(n, "Pin " + p + " darf man nicht benutzen (daran hängt der Speicher des Boards).");
+      else if (p === 1 || p === 3) W(n, "Pin " + p + " ist die USB-Verbindung (TX0/RX0). Nimm lieber einen anderen.");
+      else if (PINS_OK.indexOf(p) < 0) F(n, "Pin " + p + " gibt es auf diesem Board nicht. Schau in die Pinbelegung.");
+      else if (p >= 34 && /OUT/.test(m[2])) F(n, "Pin " + p + " ist nur ein Eingang. Hier kann keine LED o.ä. angeschlossen werden.");
+    }
+    re = /ADC\(\s*Pin\(\s*(\d+)/g;
+    while ((m = re.exec(t))) if ([32, 33, 34, 35, 36, 39].indexOf(+m[1]) < 0) W(n, "Analoge Sensoren funktionieren nur an D32–D35, VP (36) und VN (39).");
+    vorherEin = ein;
+  });
+  if (erwarte) F(blockZeile, "Nach dem Doppelpunkt kommt nichts mehr. Hier fehlt der eingerückte Teil.");
+
+  zeilen.forEach(function (roh, i) {
+    if (!/^\s*while\s+True\s*:/.test(ohneTexte(roh))) return;
+    var e0 = einzug(roh).length, mitPause = false;
+    for (var j = i + 1; j < zeilen.length; j++) {
+      var z = ohneTexte(zeilen[j]);
+      if (!z.trim()) continue;
+      if (einzug(zeilen[j]).length <= e0) break;
+      if (/sleep|entfernung_cm|servo_winkel/.test(z)) mitPause = true;
+    }
+    if (!mitPause) W(i + 1, "In dieser Schleife fehlt eine Pause, z.B. time.sleep_ms(10). Sonst lässt sie sich am Board schlecht stoppen.");
+  });
+
+  fehler.sort(function (a, b) { return a.n - b.n; });
+  warn.sort(function (a, b) { return a.n - b.n; });
+  ausgabe.innerHTML = "";
+  var zeile = function (cls, txt) { var sp = document.createElement("span"); sp.className = cls; sp.textContent = txt + "\n"; ausgabe.appendChild(sp); };
+  if (!code.value.trim()) { zeile("s", "Noch kein Code da."); return; }
+  if (!fehler.length && !warn.length) {
+    zeile("ok", "✔ Keine typischen Fehler gefunden.");
+    zeile("s", "Ob das Programm wirklich macht, was es soll, siehst du erst am Board.");
+  }
+  fehler.forEach(function (x) { zeile("f", "✖ Zeile " + x.n + ": " + x.t); });
+  warn.forEach(function (x) { zeile("w", "⚠ Zeile " + x.n + ": " + x.t); });
+  if (fehler.length) zeile("s", "\nTipp: Verbessere den ersten Fehler und prüfe dann nochmal.");
+  fehlerZeile = fehler.length ? fehler[0].n : 0;
+  zeilenAktualisieren();
+}
+
+$("start").textContent = "🔍 Prüfen";
+$("start").addEventListener("click", pruefen);
+$("boardname").textContent = "zu Hause, ohne Board";
+$("status").className = "pille neu";
+$("status").textContent = "Übungsmodus";
+document.title = "Technik-Editor – Übungsmodus";
+(function () {
+  var t = lese("uebung_code");
+  code.value = (t && t.trim()) ? t : BEISPIELE["Blinken (LED auf dem Board)"];
+  zeilenAktualisieren(); geaendert = false;
+})();
+
+</script>
+</body>
+</html>
